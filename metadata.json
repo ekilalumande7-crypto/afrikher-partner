@@ -1,0 +1,9 @@
+{
+  "name": "AFRIKHER Partner Portal",
+  "description": "Premium portal for African entrepreneurs and creatives to manage content, products, and earnings on the AFRIKHER platform.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}
