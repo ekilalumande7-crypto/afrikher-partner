@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -6,6 +6,7 @@ import { supabase } from '@/src/lib/supabase';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { LogIn, Mail, Lock, ArrowRight } from 'lucide-react';
+import { useAuth } from '@/src/context/AuthContext';
 
 const loginSchema = z.object({
   email: z.string().email('Email invalide'),
@@ -16,9 +17,21 @@ export function PartnerLogin() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { role, isValidated } = useAuth();
   const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: zodResolver(loginSchema)
   });
+
+  // Redirect if already logged in with correct role
+  useEffect(() => {
+    if (role === 'partner' && isValidated) {
+      navigate('/partner/dashboard', { replace: true });
+    } else if (role === 'pending_partner') {
+      navigate('/partner/pending', { replace: true });
+    } else if (role === 'rejected_partner') {
+      navigate('/partner/rejected', { replace: true });
+    }
+  }, [role, isValidated, navigate]);
 
   const onSubmit = async (data: any) => {
     setLoading(true);
@@ -30,7 +43,7 @@ export function PartnerLogin() {
       });
 
       if (error) throw error;
-      navigate('/partner/dashboard');
+      // Navigation handled by useEffect on role change
     } catch (err: any) {
       setError(err.message || 'Identifiants invalides');
     } finally {

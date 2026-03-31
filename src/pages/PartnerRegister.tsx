@@ -65,39 +65,54 @@ export function PartnerRegister() {
 
       if (authError) throw authError;
 
-      // 2. Create profile
-      if (authData.user) {
-        const { error: profileError } = await supabase.from('profiles').insert({
-          id: authData.user.id,
-          full_name: data1.fullName,
-          email: data1.email,
-          role: 'pending_partner',
+      if (!authData.user) throw new Error('User creation failed');
+
+      // 2. Create profile with role='pending_partner'
+      const { error: profileError } = await supabase.from('profiles').insert({
+        id: authData.user.id,
+        full_name: data1.fullName,
+        role: 'pending_partner',
+        created_at: new Date().toISOString(),
+      });
+
+      if (profileError) throw profileError;
+
+      // 3. Create partners table entry with status='pending'
+      const { error: partnerError } = await supabase.from('partners').insert({
+        id: authData.user.id,
+        company_name: data2.companyName,
+        sector: data2.sector,
+        website: data2.website || null,
+        linkedin: data2.linkedinUrl || null,
+        bio: data2.bio || null,
+        country: data2.country,
+        collaboration_types: data3.collaborationTypes,
+        motivation: data3.motivation,
+        status: 'pending',
+        created_at: new Date().toISOString(),
+      });
+
+      if (partnerError) throw partnerError;
+
+      // 4. Send notification to admin
+      await supabase.from('notifications').insert({
+        user_id: 'admin-system', // Admin system user
+        title: 'Nouvelle demande partenaire',
+        body: `${data1.fullName} (${data2.companyName}) - ${data2.sector}`,
+        type: 'new_partner',
+        read: false,
+        data: {
+          partner_id: authData.user.id,
           company_name: data2.companyName,
           sector: data2.sector,
-          website: data2.website,
-          linkedin_url: data2.linkedinUrl,
-          bio: data2.bio,
-          country: data2.country,
-          collaboration_types: data3.collaborationTypes,
-          motivation: data3.motivation,
-        });
+        },
+      });
 
-        if (profileError) throw profileError;
-
-        // 3. Send notification to admin
-        await supabase.from('notifications').insert({
-          user_id: 'admin', // In a real app, this would target specific admin IDs or a topic
-          title: 'Nouvelle demande partenaire',
-          message: `Nouveau partenaire: ${data1.fullName} (${data2.companyName})`,
-          type: 'new_partner_request',
-          read: false
-        });
-
-        setSubmitted(true);
-      }
+      setSubmitted(true);
     } catch (error) {
       console.error('Registration error:', error);
-      alert('Une erreur est survenue lors de l\'inscription.');
+      const errorMsg = error instanceof Error ? error.message : 'Une erreur est survenue lors de l\'inscription.';
+      alert(errorMsg);
     } finally {
       setLoading(false);
     }

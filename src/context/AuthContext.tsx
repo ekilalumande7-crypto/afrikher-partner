@@ -8,6 +8,8 @@ interface AuthContextType {
   profile: Profile | null;
   loading: boolean;
   signOut: () => Promise<void>;
+  role: 'partner' | 'pending_partner' | 'rejected_partner' | null;
+  isValidated: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -16,33 +18,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [role, setRole] = useState<'partner' | 'pending_partner' | 'rejected_partner' | null>(null);
+  const [isValidated, setIsValidated] = useState(false);
 
   useEffect(() => {
-    // MOCK AUTH FOR DEVELOPMENT
-    setUser({
-      id: 'mock-user-id',
-      email: 'partner@afrikher.com',
-      aud: 'authenticated',
-      role: 'authenticated',
-      app_metadata: {},
-      user_metadata: {},
-      created_at: new Date().toISOString()
-    } as User);
-    
-    setProfile({
-      id: 'mock-user-id',
-      full_name: 'Partenaire Démo',
-      email: 'partner@afrikher.com',
-      role: 'partner',
-      company_name: 'Afrikher Studio',
-      bio: 'Entrepreneur créatif passionné par l\'artisanat africain.',
-      created_at: new Date().toISOString()
-    } as Profile);
-    
-    setLoading(false);
-    
-    /* 
-    // Original Supabase Auth logic (Disabled for now)
+    // Real Supabase Auth
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -63,7 +43,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-    */
   }, []);
 
   async function fetchProfile(userId: string) {
@@ -75,7 +54,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       if (error) throw error;
-      setProfile(data);
+
+      // Extract role and set it
+      const userRole = data?.role as 'partner' | 'pending_partner' | 'rejected_partner' | null;
+      setRole(userRole);
+
+      // Determine if validated
+      if (userRole === 'partner') {
+        setIsValidated(true);
+      } else if (userRole === 'pending_partner') {
+        setIsValidated(false);
+      } else if (userRole === 'rejected_partner') {
+        setIsValidated(false);
+      }
+
+      // Also try to get partner-specific data
+      try {
+        const { data: partnerData } = await supabase
+          .from('partners')
+          .select('*')
+          .eq('id', userId)
+          .single();
+        if (partnerData) {
+          setProfile({ ...data, ...partnerData } as Profile);
+        } else {
+          setProfile(data);
+        }
+      } catch {
+        setProfile(data);
+      }
     } catch (error) {
       console.error('Error fetching profile:', error);
     } finally {
@@ -85,10 +92,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    setRole(null);
+    setIsValidated(false);
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signOut }}>
+    <AuthContext.Provider value={{ user, profile, loading, signOut, role, isValidated }}>
       {children}
     </AuthContext.Provider>
   );
