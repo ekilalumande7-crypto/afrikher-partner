@@ -1,31 +1,37 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  FileText, 
-  ShoppingBag, 
-  User, 
-  LifeBuoy, 
+import {
+  LayoutDashboard,
+  FileText,
+  ShoppingBag,
+  User,
+  LifeBuoy,
   LogOut,
-  ChevronRight
+  ChevronRight,
+  Bell,
+  PenTool,
+  Package,
+  DollarSign,
+  Send,
+  ShoppingCart
 } from 'lucide-react';
 import { useAuth } from '@/src/context/AuthContext';
 import { cn } from '@/src/lib/utils';
 
 const navItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', path: '/partner/dashboard' },
-  { 
-    icon: FileText, 
-    label: 'Mes Contenus', 
+  { icon: LayoutDashboard, label: 'Tableau de bord', path: '/partner/dashboard' },
+  {
+    icon: FileText,
+    label: 'Mes Contenus',
     path: '/partner/contenus',
     subItems: [
       { label: 'Interviews & Articles', path: '/partner/contenus' },
       { label: 'Soumettre un contenu', path: '/partner/contenus/nouveau' },
     ]
   },
-  { 
-    icon: ShoppingBag, 
-    label: 'Ma Boutique', 
+  {
+    icon: ShoppingBag,
+    label: 'Ma Boutique',
     path: '/partner/boutique',
     subItems: [
       { label: 'Mes Produits', path: '/partner/boutique/produits' },
@@ -33,6 +39,7 @@ const navItems = [
       { label: 'Mes Revenus', path: '/partner/boutique/revenus' },
     ]
   },
+  { icon: Bell, label: 'Notifications', path: '/partner/notifications' },
   { icon: User, label: 'Mon Profil', path: '/partner/profil' },
   { icon: LifeBuoy, label: 'Support', path: '/partner/support' },
 ];
@@ -44,7 +51,7 @@ export function Sidebar() {
     <aside className="w-72 h-screen bg-brand-black text-white flex flex-col sticky top-0 overflow-y-auto border-r border-white/10">
       <div className="p-8">
         <h1 className="text-2xl font-serif font-bold tracking-widest text-brand-gold">AFRIKHER</h1>
-        <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 mt-1">Partner Portal</p>
+        <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 mt-1">Portail Partenaire</p>
       </div>
 
       <nav className="flex-1 px-4 space-y-2">
